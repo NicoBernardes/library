@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"library/internal/users/controllers/models"
+	"library/internal/users/models"
 	"net/http"
 	"strconv"
 
