@@ -29,7 +29,7 @@ func (u UserService) GetAllUsers() ([]*models.User, error) {
 
 func (u UserService) UpdateUser(id int64, user *models.User) error {
 	user.UpdatedAt = time.Now()
-	return u.UpdateUser(id, user)
+	return u.userRepo.UpdateUser(id, user)
 }
 
 func (u UserService) DeleteUser(id int64) error {

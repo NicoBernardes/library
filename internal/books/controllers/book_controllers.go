@@ -12,8 +12,8 @@ type BooksController struct {
 	bookService models.BookService
 }
 
-func NewBooksController() *BooksController {
-	return &BooksController{}
+func NewBooksController(bookService models.BookService) *BooksController {
+	return &BooksController{bookService: bookService}
 }
 
 func (b *BooksController) RegisterRoutes(r *gin.Engine) {

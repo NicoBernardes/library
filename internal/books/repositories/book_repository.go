@@ -77,10 +77,10 @@ func (b *BookRepository) UpdateBook(id int64, book *models.Book) error {
 
 	book, exists := b.books[id]
 	if !exists {
-		return errors.New("user not found")
+		return errors.New("book not found")
 	}
-
-	b.books[book.ID] = book
+	//id declarado diretamente pois será enviado no parametro para update
+	b.books[id] = book
 
 	return nil
 }
