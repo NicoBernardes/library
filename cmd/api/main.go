@@ -1,9 +1,17 @@
 package main
 
 import (
-	bookscontroller "library/internal/books/controllers"
-	loancontroller "library/internal/loans/controllers"
-	usercontroller "library/internal/users/controllers"
+	bookRepository "library/internal/books/repositories"
+	loanRepository "library/internal/loans/repositories"
+	userRepository "library/internal/users/repositories"
+
+	bookService "library/internal/books/services"
+	loanService "library/internal/loans/services"
+	userService "library/internal/users/services"
+
+	booksController "library/internal/books/controllers"
+	loanController "library/internal/loans/controllers"
+	userController "library/internal/users/controllers"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -12,9 +20,17 @@ import (
 func main() {
 	router := gin.Default()
 
-	booksController := bookscontroller.NewBooksController()
-	userController := usercontroller.NewUserController()
-	loanController := loancontroller.NewLoanController()
+	bookRepository := bookRepository.NewBookRepository()
+	loanRepository := loanRepository.NewLoanRepository()
+	usersRepository := userRepository.NewUserRepository()
+
+	bookService := bookService.NewBookService(bookRepository)
+	userService := userService.NewUserService(usersRepository)
+	loanService := loanService.NewLoanService(loanRepository, bookService, userService)
+
+	booksController := booksController.NewBooksController(bookService)
+	userController := userController.NewUserController(userService)
+	loanController := loanController.NewLoanController(loanService)
 
 	booksController.RegisterRoutes(router)
 	userController.RegisterRoutes(router)
