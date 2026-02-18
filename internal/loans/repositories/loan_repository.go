@@ -90,7 +90,7 @@ func (l *LoanRepository) UpdateLoan(loan *models.Loan) error {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
-	loan, exists := l.loans[loan.ID]
+	_, exists := l.loans[loan.ID]
 	if !exists {
 		return errors.New("loan not found")
 	}

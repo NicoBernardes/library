@@ -74,12 +74,12 @@ func (u *UserRepository) UpdateUser(id int64, user *models.User) error {
 	u.mu.Lock()
 	defer u.mu.Unlock()
 
-	user, exists := u.users[id]
+	_, exists := u.users[id]
 	if !exists {
 		return errors.New("user not found")
 	}
-
-	u.users[user.ID] = user
+	user.ID = id
+	u.users[id] = user
 
 	return nil
 }

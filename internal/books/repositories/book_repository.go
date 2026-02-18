@@ -75,11 +75,12 @@ func (b *BookRepository) UpdateBook(id int64, book *models.Book) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	book, exists := b.books[id]
+	_, exists := b.books[id]
 	if !exists {
 		return errors.New("book not found")
 	}
 	//id declarado diretamente pois será enviado no parametro para update
+	book.ID = id
 	b.books[id] = book
 
 	return nil
