@@ -16,7 +16,7 @@ func NewBooksController(bookService models.BookService) *BooksController {
 	return &BooksController{bookService: bookService}
 }
 
-func (b *BooksController) RegisterRoutes(r *gin.Engine) {
+func (b *BooksController) RegisterRoutes(r *gin.RouterGroup) {
 	users := r.Group("/books")
 
 	{

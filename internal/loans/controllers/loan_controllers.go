@@ -16,7 +16,7 @@ func NewLoanController(loanService models.LoanService) *LoanController {
 	return &LoanController{loanService}
 }
 
-func (l *LoanController) RegisterRoutes(r *gin.Engine) {
+func (l *LoanController) RegisterRoutes(r *gin.RouterGroup) {
 	loans := r.Group("/loans")
 
 	{

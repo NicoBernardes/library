@@ -42,9 +42,12 @@ func main() {
 	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	router.Use(cors.New(config))
 
-	booksController.RegisterRoutes(router)
-	userController.RegisterRoutes(router)
-	loanController.RegisterRoutes(router)
+	apiGroup := router.Group("/api")
+
+	booksController.RegisterRoutes(apiGroup)
+	userController.RegisterRoutes(apiGroup)
+	loanController.RegisterRoutes(apiGroup)
+
 	webController.RegisterRoutes(router)
 
 	if err := router.Run(":8080"); err != nil {

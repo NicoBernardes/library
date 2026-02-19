@@ -8,6 +8,8 @@ import (
 	loanService "library/internal/loans/models"
 	userService "library/internal/users/models"
 
+	userModel "library/internal/users/models"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -35,6 +37,9 @@ func NewWebController(
 
 func (wc *WebController) RegisterRoutes(router *gin.Engine) {
 	router.GET("/", wc.ServeHome)
+	router.GET("/users", wc.ServeUsers)
+
+	router.POST("/users", wc.CreateUser)
 }
 
 func (wc *WebController) ServeHome(c *gin.Context) {
@@ -82,6 +87,45 @@ func (wc *WebController) ServeHome(c *gin.Context) {
 		return
 	}
 
+}
+
+func (wc *WebController) ServeUsers(c *gin.Context) {
+	users, _ := wc.userService.GetAllUsers()
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Gerenciamento de Usuários",
+		"Users":         users,
+		"ActiveSection": "users",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+	}
+
+	err := wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar o template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) CreateUser(c *gin.Context) {
+	name := c.PostForm("name")
+	email := c.PostForm("email")
+
+	user := &userModel.User{
+		Name:  name,
+		Email: email,
+	}
+
+	err := wc.userService.CreateUser(user)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao criar o usuário: "+err.Error(), "error")
+	} else {
+		wc.addFlashMessage(c, "Usuário criado com sucesso!", "success")
+	}
+
+	c.Redirect(http.StatusSeeOther, "/users")
 }
 
 func (wc *WebController) addFlashMessage(c *gin.Context, message, messageType string) {
