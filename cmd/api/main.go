@@ -1,37 +1,40 @@
 package main
 
 import (
-	bookRepository "library/internal/books/repositories"
-	loanRepository "library/internal/loans/repositories"
-	userRepository "library/internal/users/repositories"
-
-	bookService "library/internal/books/services"
-	loanService "library/internal/loans/services"
-	userService "library/internal/users/services"
-
-	booksController "library/internal/books/controllers"
-	loanController "library/internal/loans/controllers"
-	userController "library/internal/users/controllers"
 	"log"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+
+	bookRepositoryPkg "library/internal/books/repositories"
+	loanRepositoryPkg "library/internal/loans/repositories"
+	userRepositoryPkg "library/internal/users/repositories"
+
+	bookServicePkg "library/internal/books/services"
+	loanServicePkg "library/internal/loans/services"
+	userServicePkg "library/internal/users/services"
+
+	booksControllerPkg "library/internal/books/controllers"
+	loanControllerPkg "library/internal/loans/controllers"
+	userControllerPkg "library/internal/users/controllers"
+	webControllerPkg "library/internal/web/controllers"
 )
 
 func main() {
 	router := gin.Default()
 
-	bookRepository := bookRepository.NewBookRepository()
-	loanRepository := loanRepository.NewLoanRepository()
-	usersRepository := userRepository.NewUserRepository()
+	bookRepository := bookRepositoryPkg.NewBookRepository()
+	loanRepository := loanRepositoryPkg.NewLoanRepository()
+	usersRepository := userRepositoryPkg.NewUserRepository()
 
-	bookService := bookService.NewBookService(bookRepository)
-	userService := userService.NewUserService(usersRepository)
-	loanService := loanService.NewLoanService(loanRepository, bookService, userService)
+	bookService := bookServicePkg.NewBookService(bookRepository)
+	userService := userServicePkg.NewUserService(usersRepository)
+	loanService := loanServicePkg.NewLoanService(loanRepository, bookService, userService)
 
-	booksController := booksController.NewBooksController(bookService)
-	userController := userController.NewUserController(userService)
-	loanController := loanController.NewLoanController(loanService)
+	booksController := booksControllerPkg.NewBooksController(bookService)
+	userController := userControllerPkg.NewUserController(userService)
+	loanController := loanControllerPkg.NewLoanController(loanService)
+	webController := webControllerPkg.NewWebController(bookService, userService, loanService)
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
@@ -42,6 +45,7 @@ func main() {
 	booksController.RegisterRoutes(router)
 	userController.RegisterRoutes(router)
 	loanController.RegisterRoutes(router)
+	webController.RegisterRoutes(router)
 
 	if err := router.Run(":8080"); err != nil {
 		log.Fatal(err)
