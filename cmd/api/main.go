@@ -14,6 +14,7 @@ import (
 	userController "library/internal/users/controllers"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,6 +32,12 @@ func main() {
 	booksController := booksController.NewBooksController(bookService)
 	userController := userController.NewUserController(userService)
 	loanController := loanController.NewLoanController(loanService)
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	config.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
+	router.Use(cors.New(config))
 
 	booksController.RegisterRoutes(router)
 	userController.RegisterRoutes(router)

@@ -1,0 +1,64 @@
+{{define "loans"}}
+<div class="content">
+    <div class="section-header">
+        <h2 class="section-title">🔄 Gerenciamento de Empréstimos</h2>
+        <button class="btn btn-primary" onclick="document.getElementById('addLoanModal').style.display='block'">
+            ➕ Novo Empréstimo
+        </button>
+    </div>
+
+
+    <div class="card" style="margin-bottom: 20px;">
+        <form action="/loans/search" method="GET" style="display: flex; gap: 15px; align-items: end; flex-wrap: wrap;">
+            <div class="form-group" style="flex: 1; min-width: 200px;">
+                <label class="form-label">Buscar empréstimos:</label>
+                <input type="text" name="q" class="form-input" placeholder="Buscar..." value="{{.SearchQuery}}">
+            </div>
+            <div class="form-group" style="min-width: 150px;">
+                <label class="form-label">Status:</label>
+                <select name="status" class="form-select">
+                    <option value="">Todos</option>
+                    <option value="active" {{if eq .StatusFilter "active" }}selected{{end}}>Ativos</option>
+                    <option value="returned" {{if eq .StatusFilter "returned" }}selected{{end}}>Devolvidos</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">🔍 Buscar</button>
+            {{if or .SearchQuery .StatusFilter}}
+            <a href="/loans" class="btn btn-secondary">❌ Limpar</a>
+            {{end}}
+        </form>
+    </div>
+
+
+    <div class="grid grid-2">
+        {{range .Loans}}
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">Empréstimo #{{.ID}}</h3>
+                <span class="card-status {{if eq .Status " active"}}status-active{{else}}status-returned{{end}}">
+                    {{if eq .Status "active"}}Ativo{{else}}Devolvido{{end}}
+                </span>
+            </div>
+            <p><strong>Livro ID:</strong> {{.BookID}}</p>
+            <p><strong>Usuário ID:</strong> {{.UserID}}</p>
+            <p><strong>Data do Empréstimo:</strong> {{.BorrowedAt.Format "02/01/2006 15:04"}}</p>
+            {{if .ReturnedAt}}
+            <p><strong>Data da Devolução:</strong> {{.ReturnedAt.Format "02/01/2006 15:04"}}</p>
+            {{end}}
+            <div class="actions">
+                {{if eq .Status "active"}}
+                <form action="/loans/{{.ID}}/return" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-success btn-sm">📚 Devolver</button>
+                </form>
+                {{end}}
+            </div>
+        </div>
+        {{else}}
+        <div class="card" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+            <h3>Nenhum empréstimo encontrado</h3>
+            <p>Faça seu primeiro empréstimo usando o botão acima.</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+{{end}}

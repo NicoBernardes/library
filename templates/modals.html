@@ -1,0 +1,105 @@
+{{define "modals"}}
+
+<div id="addBookModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Adicionar Novo Livro</h3>
+            <span class="close" onclick="document.getElementById('addBookModal').style.display='none'">&times;</span>
+        </div>
+        <form method="POST" action="/books">
+            <div class="form-group">
+                <label class="form-label">Título</label>
+                <input type="text" class="form-input" name="title" placeholder="Digite o título do livro" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Autor</label>
+                <input type="text" class="form-input" name="author" placeholder="Digite o nome do autor" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Quantidade</label>
+                <input type="number" class="form-input" name="quantity" placeholder="Número de exemplares" min="1"
+                    required>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary"
+                    onclick="document.getElementById('addBookModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="addUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Adicionar Novo Usuário</h3>
+            <span class="close" onclick="document.getElementById('addUserModal').style.display='none'">&times;</span>
+        </div>
+        <form method="POST" action="/users">
+            <div class="form-group">
+                <label class="form-label">Nome</label>
+                <input type="text" class="form-input" name="name" placeholder="Digite o nome completo" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" name="email" placeholder="Digite o email" required>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary"
+                    onclick="document.getElementById('addUserModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<div id="addLoanModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Novo Empréstimo</h3>
+            <span class="close" onclick="document.getElementById('addLoanModal').style.display='none'">&times;</span>
+        </div>
+        <form method="POST" action="/loans">
+            <div class="form-group">
+                <label class="form-label">Usuário</label>
+                <select class="form-select" name="user_id" required>
+                    <option value="">Selecione um usuário</option>
+                    {{range .Users}}
+                    <option value="{{.ID}}">{{.Name}} ({{.Email}})</option>
+                    {{end}}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Livro</label>
+                <select class="form-select" name="book_id" required>
+                    <option value="">Selecione um livro</option>
+                    {{range .Books}}
+                    {{if gt .Quantity 0}}
+                    <option value="{{.ID}}">{{.Title}} - {{.Author}}</option>
+                    {{end}}
+                    {{end}}
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary"
+                    onclick="document.getElementById('addLoanModal').style.display='none'">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Criar Empréstimo</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Fechar modal quando clicar fora
+    window.onclick = function (event) {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    }
+</script>
+{{end}}
