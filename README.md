@@ -1,142 +1,129 @@
 # Library Management System
 
-A RESTful API for managing library books, users, and loans built with Go and the Gin web framework.
+A full-stack library management application built with Go and the Gin web framework, featuring both a RESTful API and a web-based UI.
 
-## Overview
+## Features
 
-This is a library management system that allows you to:
-- **Manage Books**: Create, read, update, and delete books in the library catalog
-- **Manage Users**: Register and manage library users
-- **Track Loans**: Monitor book loans and returns by users
-
-The application follows a clean MVC (Model-View-Controller) architecture with clear separation of concerns using repositories, services, and controllers.
+- **Book Management** - Full CRUD with title, author, and quantity tracking
+- **User Management** - Register and manage library members with email validation
+- **Loan Tracking** - Borrow and return books with automatic availability updates
+- **Search & Filtering** - Search books by title/author, users by name/email, filter loans by status
+- **Dashboard** - Overview with statistics (total books, users, active loans, etc.)
 
 ## Tech Stack
 
 - **Language**: Go 1.25.5
-- **Framework**: Gin (v1.11.0)
-- **Architecture**: MVC with Repository pattern
+- **Framework**: Gin v1.11.0
+- **Storage**: In-memory (concurrent-safe with RWMutex)
+- **Frontend**: Server-rendered HTML templates with embedded CSS
+- **Architecture**: MVC with Repository and Service layers
 
 ## Project Structure
 
 ```
 library/
-├── cmd/
-│   └── api/
-│       └── main.go                 # Application entry point
+├── cmd/api/
+│   └── main.go                          # Entry point and route setup
 ├── internal/
 │   ├── books/
-│   │   ├── models/                 # Book entity and business logic
-│   │   ├── repositories/           # Data access layer for books
-│   │   ├── services/               # Business logic layer for books
-│   │   └── controllers/            # HTTP handlers for books
-│   ├── users/
-│   │   ├── models/                 # User entity and business logic
-│   │   ├── repositories/           # Data access layer for users
-│   │   ├── services/               # Business logic layer for users
-│   │   └── controllers/            # HTTP handlers for users
-│   └── loans/
-│       ├── models/                 # Loan entity and business logic
-│       ├── repositories/           # Data access layer for loans
-│       ├── services/               # Business logic layer for loans
-│       └── controllers/            # HTTP handlers for loans
-└── go.mod                          # Go module definition
+│   │   ├── models/                      # Entity and interfaces
+│   │   ├── repositories/               # Data access layer
+│   │   ├── services/                    # Business logic
+│   │   └── controllers/                # API handlers
+│   ├── users/                           # Same layered structure
+│   ├── loans/                           # Same layered structure
+│   └── web/
+│       └── controllers/                 # Web UI handlers
+├── templates/                           # HTML templates
+│   ├── layout.html                      # Master layout with navigation
+│   ├── dashboard.html                   # Home page with stats
+│   ├── books.html                       # Book management
+│   ├── users.html                       # User management
+│   ├── loans.html                       # Loan management
+│   ├── modals.html                      # Reusable modal forms
+│   └── styles.html                      # Embedded CSS
+└── go.mod
 ```
 
-## Architecture
-
-The application uses a **layered architecture**:
-
-1. **Controllers** - Handle HTTP requests and responses
-2. **Services** - Contain business logic and orchestration
-3. **Repositories** - Handle data persistence and retrieval
-4. **Models** - Define data structures and domain entities
-
-### Dependency Flow
-
-```
-HTTP Request → Controllers → Services → Repositories → Data
-```
-
-## Installation
+## Getting Started
 
 ### Prerequisites
 
 - Go 1.25.5 or higher
 
-### Setup
+### Run
 
-1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd library
-```
-
-2. Install dependencies:
-```bash
 go mod download
-```
-
-3. Run the application:
-```bash
 go run ./cmd/api/main.go
 ```
 
-The server will start on `http://localhost:8080`
+The application starts at `http://localhost:8080`.
 
-## API Endpoints
-
-### Books
-- `GET /books` - List all books
-- `GET /books/:id` - Get a specific book
-- `POST /books` - Create a new book
-- `PUT /books/:id` - Update a book
-- `DELETE /books/:id` - Delete a book
-
-### Users
-- `GET /users` - List all users
-- `GET /users/:id` - Get a specific user
-- `POST /users` - Create a new user
-- `PUT /users/:id` - Update a user
-- `DELETE /users/:id` - Delete a user
-
-### Loans
-- `GET /loans` - List all loans
-- `GET /loans/:id` - Get a specific loan
-- `POST /loans` - Create a new loan
-- `PUT /loans/:id` - Update a loan
-- `DELETE /loans/:id` - Delete a loan
-
-## Key Features
-
-- **Book Management**: Manage library inventory with title, author, and quantity tracking
-- **User Management**: Register and maintain user profiles
-- **Loan Tracking**: Track which users have borrowed which books and manage returns
-- **Validation**: Input validation on required fields and constraints
-
-## Development
-
-### Running Tests
-
-```bash
-go test ./...
-```
-
-### Building for Production
+### Build
 
 ```bash
 go build -o library ./cmd/api
 ```
 
-## Future Enhancements
+## Web Interface
 
-- Database integration (currently in-memory)
-- Authentication and authorization
-- Loan due dates and overdue tracking
-- Book availability checking
-- User reservation system
-- API documentation (Swagger/OpenAPI)
+| Page | Path | Description |
+|------|------|-------------|
+| Dashboard | `/` | Statistics and quick actions |
+| Books | `/books` | Manage book catalog |
+| Users | `/users` | Manage library members |
+| Loans | `/loans` | Track borrows and returns |
+
+## API Endpoints
+
+### Books (`/api/books`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/books` | List all books |
+| GET | `/api/books/:id` | Get a book |
+| POST | `/api/books` | Create a book |
+| PUT | `/api/books/:id` | Update a book |
+| DELETE | `/api/books/:id` | Delete a book |
+
+### Users (`/api/users`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/users` | List all users |
+| GET | `/api/users/:id` | Get a user |
+| POST | `/api/users` | Create a user |
+| PUT | `/api/users/:id` | Update a user |
+| DELETE | `/api/users/:id` | Delete a user |
+
+### Loans (`/api/loans`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/loans` | List all loans |
+| GET | `/api/loans/:id` | Get a loan |
+| POST | `/api/loans` | Create a loan (borrow) |
+| PUT | `/api/loans/:id/return` | Return a book |
+| GET | `/api/loans/users/:userId/loans` | Get loans by user |
+
+## Business Rules
+
+- Books require a title and author (min 5 characters) and quantity (min 1)
+- Users require a name and valid email
+- A user cannot borrow a new book while they have an active loan
+- Book quantity decreases on borrow and increases on return
+
+## Architecture
+
+```
+HTTP Request -> Controllers -> Services -> Repositories -> In-Memory Store
+```
+
+Each domain (books, users, loans) follows interface-driven design with dependency injection, keeping layers decoupled and testable.
 
 ## License
 
-🏆 MIT License
+MIT License

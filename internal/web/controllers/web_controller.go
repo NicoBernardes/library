@@ -10,6 +10,7 @@ import (
 	userService "library/internal/users/models"
 
 	bookModel "library/internal/books/models"
+	loanModel "library/internal/loans/models"
 	userModel "library/internal/users/models"
 
 	"github.com/gin-gonic/gin"
@@ -47,8 +48,13 @@ func (wc *WebController) RegisterRoutes(router *gin.Engine) {
 	router.POST("/users", wc.CreateUser)
 	router.POST("/loans", wc.CreateLoan)
 
+	router.GET("/loans/search", wc.SearchLoan)
+	router.GET("/users/search", wc.SearchUser)
+	router.GET("/books/search", wc.SearchBook)
+
 	router.POST("/users/:id/edit", wc.UpdateUser)
 	router.POST("/books/:id/edit", wc.UpdateBook)
+	router.POST("/loans/:id/return", wc.ReturnBook)
 
 	router.GET("/users/:id/edit", wc.EditUserForm)
 	router.GET("/books/:id/edit", wc.EditBookForm)
@@ -75,6 +81,185 @@ func (wc *WebController) ServeBooks(c *gin.Context) {
 		c.String(http.StatusInternalServerError, "Erro ao renderizar o template: %v", err)
 		return
 	}
+}
+
+func (wc *WebController) SearchBook(c *gin.Context) {
+	query := c.Query("q")
+
+	var books []*bookModel.Book
+	var err error
+
+	if query != "" {
+		allBooks, err := wc.bookService.GetAllBooks()
+		if err != nil {
+			wc.addFlashMessage(c, "Erro ao buscar livros: "+err.Error(), "error")
+			c.Redirect(http.StatusSeeOther, "/books")
+			return
+		}
+
+		for _, book := range allBooks {
+			if contains(book.Title, query) || contains(book.Author, query) {
+				books = append(books, book)
+			}
+		}
+	} else {
+		books, err = wc.bookService.GetAllBooks()
+	}
+
+	if err != nil {
+		wc.addFlashMessage(c, "|Erro ao buscar livros: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Busca de Livros",
+		"Books":         books,
+		"ActiveSection": "books",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+		"SearchQuery":   query,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) SearchUser(c *gin.Context) {
+	query := c.Query("q")
+
+	var users []*userModel.User
+	var err error
+
+	if query != "" {
+		allUsers, err := wc.userService.GetAllUsers()
+		if err != nil {
+			wc.addFlashMessage(c, "Erro ao buscar usuários: "+err.Error(), "error")
+			c.Redirect(http.StatusSeeOther, "/users")
+			return
+		}
+
+		for _, user := range allUsers {
+			if contains(user.Name, query) || contains(user.Email, query) {
+				users = append(users, user)
+			}
+		}
+	} else {
+		users, err = wc.userService.GetAllUsers()
+	}
+
+	if err != nil {
+		wc.addFlashMessage(c, "|Erro ao buscar usuários: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/users")
+		return
+	}
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Busca de Usuários",
+		"Users":         users,
+		"ActiveSection": "users",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+		"SearchQuery":   query,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) SearchLoan(c *gin.Context) {
+	query := c.Query("q")
+	status := c.Query("status")
+
+	var loans []*loanModel.Loan
+	var err error
+
+	loans, err = wc.loanService.GetAllLoans()
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao buscar empréstimos: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/loans")
+		return
+	}
+
+	if status != "" {
+		var filteredLoans []*loanModel.Loan
+		for _, loan := range loans {
+			if loan.Status == status {
+				filteredLoans = append(filteredLoans, loan)
+			}
+		}
+		loans = filteredLoans
+	}
+
+	books, _ := wc.bookService.GetAllBooks()
+	users, _ := wc.userService.GetAllUsers()
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Busca de Empréstimos",
+		"Loans":         loans,
+		"Books":         books,
+		"Users":         users,
+		"ActiveSection": "loans",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+		"SearchQuery":   query,
+		"StatusFilter":  status,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar template: %v", err)
+		return
+	}
+}
+
+func contains(s, substr string) bool {
+	return len(s) >= len(substr) && (s == substr ||
+		(len(s) > len(substr) && (s[:len(substr)] == substr ||
+			s[len(s)-len(substr):] == substr ||
+			containsSubstring(s, substr))))
+}
+
+func containsSubstring(s, substr string) bool {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (wc *WebController) ReturnBook(c *gin.Context) {
+	loanIDStr := c.Param("id")
+	loanID, err := strconv.ParseInt(loanIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do empréstimo inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/loans")
+		return
+	}
+
+	err = wc.loanService.ReturnBook(loanID)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao devolver o livro: "+err.Error(), "error")
+	} else {
+		wc.addFlashMessage(c, "Livro devolvido com sucesso!", "success")
+	}
+
+	c.Redirect(http.StatusSeeOther, "/loans")
+
 }
 
 func (wc *WebController) ServeLoans(c *gin.Context) {
