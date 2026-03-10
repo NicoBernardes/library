@@ -44,9 +44,15 @@ func (wc *WebController) RegisterRoutes(router *gin.Engine) {
 
 	router.POST("/books", wc.CreateBook)
 	router.POST("/users", wc.CreateUser)
+
 	router.POST("/users/:id/edit", wc.UpdateUser)
+	router.POST("/users/:id/edit", wc.UpdateBook)
+
 	router.GET("/users/:id/edit", wc.EditUserForm)
+	router.GET("/users/:id/edit", wc.EditBookForm)
+
 	router.POST("/users/:id/delete", wc.DeleteUser)
+	router.POST("/users/:id/delete", wc.DeleteBook)
 }
 
 func (wc *WebController) ServeBooks(c *gin.Context) {
@@ -117,6 +123,26 @@ func (wc *WebController) DeleteUser(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/users")
 }
 
+func (wc *WebController) DeleteBook(c *gin.Context) {
+	bookIDStr := c.Param("id")
+
+	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do livro inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	err = wc.bookService.DeleteBook(bookID)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao excluir o livro: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/books")
+}
+
 func (wc *WebController) UpdateUser(c *gin.Context) {
 	userIDStr := c.Param("id")
 
@@ -149,6 +175,47 @@ func (wc *WebController) UpdateUser(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/users")
 }
 
+func (wc *WebController) UpdateBook(c *gin.Context) {
+	bookIDStr := c.Param("id")
+
+	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do livro inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	book, err := wc.bookService.GetBook(bookID)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao buscar o livro: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	title := c.PostForm("title")
+	author := c.PostForm("author")
+	quantityStr := c.PostForm("quantity")
+
+	quantity, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		wc.addFlashMessage(c, "Quantidade inválida: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	book.Title = title
+	book.Author = author
+	book.Quantity = quantity
+
+	err = wc.bookService.UpdateBook(bookID, book)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao atualizar o usuario: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+	c.Redirect(http.StatusSeeOther, "/books")
+}
+
 func (wc *WebController) EditUserForm(c *gin.Context) {
 	userIDStr := c.Param("id")
 
@@ -172,6 +239,41 @@ func (wc *WebController) EditUserForm(c *gin.Context) {
 		"Title":         "Editar Usuário",
 		"User":          user,
 		"ActiveSection": "users",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+		"IsEdit":        true,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar o template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) EditBookForm(c *gin.Context) {
+	bookIDStr := c.Param("id")
+
+	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do livro inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	book, err := wc.bookService.GetBook(bookID)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao buscar o usuario: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Editar Livro",
+		"Book":          book,
+		"ActiveSection": "books",
 		"FlashMessage":  flashMessage,
 		"FlashType":     flashType,
 		"IsEdit":        true,
