@@ -41,18 +41,20 @@ func (wc *WebController) RegisterRoutes(router *gin.Engine) {
 	router.GET("/", wc.ServeHome)
 	router.GET("/users", wc.ServeUsers)
 	router.GET("/books", wc.ServeBooks)
+	router.GET("/loans", wc.ServeLoans)
 
 	router.POST("/books", wc.CreateBook)
 	router.POST("/users", wc.CreateUser)
+	router.POST("/loans", wc.CreateLoan)
 
 	router.POST("/users/:id/edit", wc.UpdateUser)
-	router.POST("/users/:id/edit", wc.UpdateBook)
+	router.POST("/books/:id/edit", wc.UpdateBook)
 
 	router.GET("/users/:id/edit", wc.EditUserForm)
-	router.GET("/users/:id/edit", wc.EditBookForm)
+	router.GET("/books/:id/edit", wc.EditBookForm)
 
 	router.POST("/users/:id/delete", wc.DeleteUser)
-	router.POST("/users/:id/delete", wc.DeleteBook)
+	router.POST("/books/:id/delete", wc.DeleteBook)
 }
 
 func (wc *WebController) ServeBooks(c *gin.Context) {
@@ -64,6 +66,30 @@ func (wc *WebController) ServeBooks(c *gin.Context) {
 		"Title":         "Gerenciamento de Livros",
 		"Books":         books,
 		"ActiveSection": "books",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar o template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) ServeLoans(c *gin.Context) {
+	books, err := wc.bookService.GetAllBooks()
+	users, err := wc.userService.GetAllUsers()
+	loans, err := wc.loanService.GetAllLoans()
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Gerenciamento de Empréstimos",
+		"Books":         books,
+		"Users":         users,
+		"Loans":         loans,
+		"ActiveSection": "loans",
 		"FlashMessage":  flashMessage,
 		"FlashType":     flashType,
 	}
@@ -101,6 +127,33 @@ func (wc *WebController) CreateBook(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/books")
+}
+
+func (wc *WebController) CreateLoan(c *gin.Context) {
+	userIDStr := c.PostForm("user_id")
+	bookIDStr := c.PostForm("book_id")
+
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do usuário inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/loans")
+		return
+	}
+	bookID, err := strconv.ParseInt(bookIDStr, 10, 64)
+	if err != nil {
+		wc.addFlashMessage(c, "ID do livro inválido", "error")
+		c.Redirect(http.StatusSeeOther, "/loans")
+		return
+	}
+
+	_, err = wc.loanService.CreateLoan(bookID, userID)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao criar empréstimo: "+err.Error(), "error")
+	} else {
+		wc.addFlashMessage(c, "empréstimo criado com sucesso!", "success")
+	}
+
+	c.Redirect(http.StatusSeeOther, "/loans")
 }
 
 func (wc *WebController) DeleteUser(c *gin.Context) {
