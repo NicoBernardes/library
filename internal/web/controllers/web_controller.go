@@ -9,6 +9,7 @@ import (
 	loanService "library/internal/loans/models"
 	userService "library/internal/users/models"
 
+	bookModel "library/internal/books/models"
 	userModel "library/internal/users/models"
 
 	"github.com/gin-gonic/gin"
@@ -39,11 +40,61 @@ func NewWebController(
 func (wc *WebController) RegisterRoutes(router *gin.Engine) {
 	router.GET("/", wc.ServeHome)
 	router.GET("/users", wc.ServeUsers)
+	router.GET("/books", wc.ServeBooks)
 
+	router.POST("/books", wc.CreateBook)
 	router.POST("/users", wc.CreateUser)
 	router.POST("/users/:id/edit", wc.UpdateUser)
 	router.GET("/users/:id/edit", wc.EditUserForm)
 	router.POST("/users/:id/delete", wc.DeleteUser)
+}
+
+func (wc *WebController) ServeBooks(c *gin.Context) {
+	books, err := wc.bookService.GetAllBooks()
+
+	flashMessage, flashType := wc.getFlashMessage(c)
+
+	data := map[string]interface{}{
+		"Title":         "Gerenciamento de Livros",
+		"Books":         books,
+		"ActiveSection": "books",
+		"FlashMessage":  flashMessage,
+		"FlashType":     flashType,
+	}
+
+	err = wc.templates.ExecuteTemplate(c.Writer, "layout", data)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Erro ao renderizar o template: %v", err)
+		return
+	}
+}
+
+func (wc *WebController) CreateBook(c *gin.Context) {
+	title := c.PostForm("title")
+	author := c.PostForm("author")
+	quantityStr := c.PostForm("quantity")
+
+	quantity, err := strconv.Atoi(quantityStr)
+	if err != nil {
+		wc.addFlashMessage(c, "Quantidade Inválida: "+err.Error(), "error")
+		c.Redirect(http.StatusSeeOther, "/books")
+		return
+	}
+
+	book := &bookModel.Book{
+		Title:    title,
+		Author:   author,
+		Quantity: quantity,
+	}
+
+	err = wc.bookService.CreateBook(book)
+	if err != nil {
+		wc.addFlashMessage(c, "Erro ao criar o livro: "+err.Error(), "error")
+	} else {
+		wc.addFlashMessage(c, "Livro criado com sucesso!", "success")
+	}
+
+	c.Redirect(http.StatusSeeOther, "/books")
 }
 
 func (wc *WebController) DeleteUser(c *gin.Context) {
